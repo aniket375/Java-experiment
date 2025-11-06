@@ -1,1 +1,117 @@
+import java.util.Scanner;
+import java.util.HashMap;
+import java.util.Map;
 
+class Account {
+    private int id;
+    private String name;
+    private double balance;
+
+    public Account(int id, String name, double balance) {
+        this.id = id;
+        this.name = name;
+        this.balance = balance;
+    }
+
+    public int getId() { return id; }
+    public String getName() { return name; }
+    public double getBalance() { return balance; }
+    public void setBalance(double balance) { this.balance = balance; }
+
+    @Override
+    public String toString() {
+        return "ID: " + id + ", Name: " + name + ", Balance: " + balance;
+    }
+}
+
+public class BankingSystemConsole {
+    private static Map<Integer, Account> accounts = new HashMap<>();
+    private static Scanner sc = new Scanner(System.in);
+    private static int nextId = 1;
+
+    public static void main(String[] args) {
+        while (true) {
+            System.out.println("\n--- Banking System Menu ---");
+            System.out.println("1. Create Account");
+            System.out.println("2. View Accounts");
+            System.out.println("3. Transfer Money");
+            System.out.println("4. Exit");
+            System.out.print("Choose an option: ");
+            int choice = sc.nextInt();
+            sc.nextLine(); // consume newline
+
+            switch (choice) {
+                case 1 -> createAccount();
+                case 2 -> viewAccounts();
+                case 3 -> transferMoney();
+                case 4 -> {
+                    System.out.println("Exiting...");
+                    return;
+                }
+                default -> System.out.println("Invalid choice. Try again.");
+            }
+        }
+    }
+
+    private static void createAccount() {
+        System.out.print("Enter account name: ");
+        String name = sc.nextLine();
+        System.out.print("Enter initial balance: ");
+        double balance = sc.nextDouble();
+        sc.nextLine(); // consume newline
+        Account acc = new Account(nextId++, name, balance);
+        accounts.put(acc.getId(), acc);
+        System.out.println("Account created: " + acc);
+    }
+
+    private static void viewAccounts() {
+        if (accounts.isEmpty()) {
+            System.out.println("No accounts found.");
+            return;
+        }
+        System.out.println("\n--- All Accounts ---");
+        for (Account acc : accounts.values()) {
+            System.out.println(acc);
+        }
+    }
+
+    private static void transferMoney() {
+        System.out.print("Enter sender account ID: ");
+        int fromId = sc.nextInt();
+        System.out.print("Enter receiver account ID: ");
+        int toId = sc.nextInt();
+        System.out.print("Enter amount to transfer: ");
+        double amount = sc.nextDouble();
+        sc.nextLine(); // consume newline
+
+        Account fromAcc = accounts.get(fromId);
+        Account toAcc = accounts.get(toId);
+
+        if (fromAcc == null || toAcc == null) {
+            System.out.println("Invalid account ID(s). Transaction aborted.");
+            return;
+        }
+
+        // Simulate transaction with rollback on failure
+        double originalFromBalance = fromAcc.getBalance();
+        double originalToBalance = toAcc.getBalance();
+
+        try {
+            if (amount <= 0) throw new Exception("Amount must be positive.");
+            if (fromAcc.getBalance() < amount) throw new Exception("Insufficient balance.");
+
+            fromAcc.setBalance(fromAcc.getBalance() - amount);
+            toAcc.setBalance(toAcc.getBalance() + amount);
+
+            System.out.println("Transaction successful!");
+            System.out.println("Sender: " + fromAcc);
+            System.out.println("Receiver: " + toAcc);
+
+        } catch (Exception e) {
+            // rollback
+            fromAcc.setBalance(originalFromBalance);
+            toAcc.setBalance(originalToBalance);
+            System.out.println("Transaction failed: " + e.getMessage());
+        }
+    }
+}
